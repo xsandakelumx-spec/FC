@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>මගේ Flashcards ඇප් එක</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+        h2 { text-align: center; color: #333; margin-top: 0; }
+        .card {
+            background: #4a90e2;
+            color: white;
+            height: 200px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            padding: 20px;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: transform 0.3s;
+            user-select: none;
+            margin-bottom: 20px;
+        }
+        .card:active { transform: scale(0.98); }
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover { background: #357abd; }
+        button.delete { background: #e74c3c; }
+        button.delete:hover { background: #c0392b; }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .counter {
+            text-align: center;
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Flashcards</h2>
+    <div class="counter" id="counter">කාඩ්පත 0 / 0</div>
+
+    <div class="card" id="flashcard" onclick="flipCard()">
+        ප්‍රශ්නය හෝ වචනය මෙතැනින් පෙනේ (කරකැවීමට ක්ලික් කරන්න)
+    </div>
+
+    <div class="buttons">
+        <button onclick="prevCard()">පෙර (Prev)</button>
+        <button class="delete" onclick="deleteCard()">මකන්න (Delete)</button>
+        <button onclick="nextCard()">ළඟ (Next)</button>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #eee; margin: 15px 0;">
+
+    <div class="form-group">
+        <input type="text" id="questionInput" placeholder="ප්‍රශ්නය හෝ ඉදිරිපස වචනය...">
+    </div>
+    <div class="form-group">
+        <textarea id="answerInput" placeholder="පිළිතුර හෝ පසුපස විස්තරය..." rows="2"></textarea>
+    </div>
+    <button style="width: 100%; background: #2ecc71;" onclick="addCard()">새 Card එකක් එකතු කරන්න</button>
+</div>
+
+<script>
+    let cards = JSON.parse(localStorage.getItem('flashcards')) || [
+        { q: "Apple", a: "ඇපල් (ගෙඩියක්)" },
+        { q: "Book", a: "පොතක්" }
+    ];
+    let currentIndex = 0;
+    let showingQuestion = true;
+
+    const cardEl = document.getElementById('flashcard');
+    const counterEl = document.getElementById('counter');
+
+    function displayCard() {
+        if (cards.length === 0) {
+            cardEl.innerText = "කාඩ්පත් නොමැත. කරුණාකර නව කාඩ්පතක් එකතු කරන්න.";
+            counterEl.innerText = "කාඩ්පත 0 / 0";
+            return;
+        }
+        if (currentIndex >= cards.length) currentIndex = cards.length - 1;
+        if (currentIndex < 0) currentIndex = 0;
+
+        cardEl.innerText = showingQuestion ? cards[currentIndex].q : cards[currentIndex].a;
+        counterEl.innerText = `කාඩ්පත ${currentIndex + 1} / ${cards.length}`;
+    }
+
+    function flipCard() {
+        if (cards.length === 0) return;
+        showingQuestion = !showingQuestion;
+        displayCard();
+    }
+
+    function nextCard() {
+        if (cards.length === 0) return;
+        showingQuestion = true;
+        currentIndex = (currentIndex + 1) % cards.length;
+        displayCard();
+    }
+
+    function prevCard() {
+        if (cards.length === 0) return;
+        showingQuestion = true;
+        currentIndex = (currentIndex - 1 + cards.length) % cards.length;
+        displayCard();
+    }
+
+    function addCard() {
+        const q = document.getElementById('questionInput').value.trim();
+        const a = document.getElementById('answerInput').value.trim();
+
+        if (!q || !a) {
+            alert("කරුණාකර ප්‍රශ්නය සහ පිළිතුර යන දෙකම ඇතුළත් කරන්න!");
+            return;
+        }
+
+        cards.push({ q, a });
+        localStorage.setItem('flashcards', JSON.stringify(cards));
+        
+        document.getElementById('questionInput').value = '';
+        document.getElementById('answerInput').value = '';
+        
+        currentIndex = cards.length - 1;
+        showingQuestion = true;
+        displayCard();
+    }
+
+    function deleteCard() {
+        if (cards.length === 0) return;
+        cards.splice(currentIndex, 1);
+        localStorage.setItem('flashcards', JSON.stringify(cards));
+        showingQuestion = true;
+        displayCard();
+    }
+
+    displayCard();
+</script>
+
+</body>
+</html>
